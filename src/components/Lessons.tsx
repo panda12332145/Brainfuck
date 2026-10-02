@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { highlight } from "./CodeEditor";
 import { buildCode, CATEGORIES, COMMANDS, IDIOMS, LESSONS, type Category, type Lesson } from "../bf/lessons";
+import { encodeText } from "../bf/generator";
 
+/** Renderiza `trechos entre crases` como código. */
 function Rich({ text }: { text: string }) {
   return (
     <>
@@ -24,8 +26,14 @@ const LEVEL: Record<Lesson["level"], string> = {
   Avançado: "bg-rose-500/15 text-rose-300",
 };
 
-export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; currentCode: string }) {
-  const [tab, setTab] = useState<"licoes" | "ref">("licoes");
+interface Props {
+  onLoad: (l: Lesson) => void;
+  onLoadCode: (code: string) => void;
+  currentCode: string;
+}
+
+export function Lessons({ onLoad, onLoadCode, currentCode }: Props) {
+  const [tab, setTab] = useState<"licoes" | "ref" | "gerador">("licoes");
   const [cat, setCat] = useState<Category | "Todas">("Todas");
   const [open, setOpen] = useState<string | null>("numeros-grandes");
 
@@ -38,13 +46,15 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
           [
             ["licoes", "📚 Aprender"],
             ["ref", "⌨️ Referência"],
+            ["gerador", "✨ Gerador"],
           ] as const
         ).map(([k, label]) => (
           <button
             key={k}
+            type="button"
             onClick={() => setTab(k)}
             className={
-              "flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors " +
+              "flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition-colors sm:text-sm " +
               (tab === k ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200")
             }
           >
@@ -60,6 +70,7 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
               {(["Todas", ...CATEGORIES] as const).map((c) => (
                 <button
                   key={c}
+                  type="button"
                   onClick={() => setCat(c)}
                   className={
                     "rounded-full border px-2.5 py-1 text-xs transition-colors " +
@@ -79,14 +90,29 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
                 const code = buildCode(l);
                 const loaded = code === currentCode;
                 return (
-                  <div key={l.id} className={"overflow-hidden rounded-xl border " + (isOpen ? "border-slate-600 bg-slate-900" : "border-slate-800 bg-slate-900/50")}>
-                    <button onClick={() => setOpen(isOpen ? null : l.id)} className="flex w-full items-start gap-2 p-3 text-left">
+                  <div
+                    key={l.id}
+                    className={
+                      "overflow-hidden rounded-xl border " +
+                      (isOpen ? "border-slate-600 bg-slate-900" : "border-slate-800 bg-slate-900/50")
+                    }
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpen(isOpen ? null : l.id)}
+                      aria-expanded={isOpen}
+                      className="flex w-full items-start gap-2 p-3 text-left"
+                    >
                       <span className={"mt-0.5 text-slate-500 transition-transform " + (isOpen ? "rotate-90" : "")}>▶</span>
                       <span className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-semibold text-slate-100">{l.title}</span>
-                          <span className={"rounded px-1.5 py-0.5 text-[10px] font-semibold " + LEVEL[l.level]}>{l.level}</span>
-                          {loaded && <span className="rounded bg-sky-500/20 px-1.5 py-0.5 text-[10px] text-sky-300">no editor</span>}
+                          <span className={"rounded px-1.5 py-0.5 text-[10px] font-semibold " + LEVEL[l.level]}>
+                            {l.level}
+                          </span>
+                          {loaded && (
+                            <span className="rounded bg-sky-500/20 px-1.5 py-0.5 text-[10px] text-sky-300">no editor</span>
+                          )}
                         </span>
                         <span className="mt-0.5 block text-xs text-slate-400">
                           <Rich text={l.summary} />
@@ -100,7 +126,8 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
                         </pre>
                         {l.input && (
                           <p className="text-xs text-slate-400">
-                            Entrada sugerida: <code className="rounded bg-slate-800 px-1 py-0.5 text-slate-200">{l.input}</code>
+                            Entrada sugerida:{" "}
+                            <code className="rounded bg-slate-800 px-1 py-0.5 text-slate-200">{l.input}</code>
                           </p>
                         )}
                         {l.explain.map((p, i) => (
@@ -108,10 +135,9 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
                             <Rich text={p} />
                           </p>
                         ))}
-                        {l.tip && (
-                          <p className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-2.5 text-xs text-sky-200">💡 {l.tip}</p>
-                        )}
+                        {l.tip && <p className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-2.5 text-xs text-sky-200">💡 {l.tip}</p>}
                         <button
+                          type="button"
                           onClick={() => onLoad(l)}
                           className="w-full rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-400"
                         >
@@ -124,13 +150,18 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
               })}
             </div>
           </>
+        ) : tab === "gerador" ? (
+          <Generator onLoadCode={onLoadCode} />
         ) : (
           <div className="space-y-5">
             <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Os 8 comandos</h3>
+              <h3 className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase">Os 8 comandos</h3>
               <div className="space-y-1.5">
                 {COMMANDS.map((c) => (
-                  <div key={c.sym} className="flex items-start gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
+                  <div
+                    key={c.sym}
+                    className="flex items-start gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-2.5"
+                  >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-950 font-mono text-lg font-bold">
                       {highlight(c.sym)}
                     </span>
@@ -147,7 +178,9 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
             </section>
 
             <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Truques (idiomas) mais usados</h3>
+              <h3 className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                Truques (idiomas) mais usados
+              </h3>
               <div className="space-y-1.5">
                 {IDIOMS.map((i) => (
                   <div key={i.code} className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
@@ -162,7 +195,9 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
             </section>
 
             <section className="space-y-2 text-sm text-slate-300">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Regras desta implementação</h3>
+              <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                Regras desta implementação
+              </h3>
               <ul className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-slate-400">
                 <li>Fita de 30.000 células, todas começando em 0.</li>
                 <li>Células de 8 bits: 255 + 1 = 0 e 0 − 1 = 255.</li>
@@ -171,12 +206,109 @@ export function Lessons({ onLoad, currentCode }: { onLoad: (l: Lesson) => void; 
                   <Rich text="`,` sem entrada disponível grava 0 na célula." />
                 </li>
                 <li>Qualquer caractere fora dos 8 comandos é comentário.</li>
-                <li>Atalhos: Ctrl+Enter executa, F10 dá um passo, Shift+F10 avança uma linha.</li>
+                <li>
+                  <Rich text="⚠️ Símbolos de comando dentro de um comentário VIRAM comandos." />
+                </li>
+                <li>
+                  Atalhos: <kbd className="rounded bg-slate-800 px-1">Ctrl+Enter</kbd> executa,{" "}
+                  <kbd className="rounded bg-slate-800 px-1">F10</kbd> passo,{" "}
+                  <kbd className="rounded bg-slate-800 px-1">Shift+F10</kbd> linha,{" "}
+                  <kbd className="rounded bg-slate-800 px-1">F9</kbd> breakpoint,{" "}
+                  <kbd className="rounded bg-slate-800 px-1">Alt+←</kbd> volta um passo.
+                </li>
               </ul>
             </section>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Converte texto comum em código Brainfuck. */
+function Generator({ onLoadCode }: { onLoadCode: (code: string) => void }) {
+  const [text, setText] = useState("Ola, mundo!");
+  const [wrap, setWrap] = useState(64);
+  const [copied, setCopied] = useState(false);
+
+  const code = useMemo(() => encodeText(text, wrap), [text, wrap]);
+  const bytes = useMemo(() => new TextEncoder().encode(text).length, [text]);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm leading-relaxed text-slate-300">
+        Escreva um texto e o gerador monta um programa Brainfuck que imprime ele. Ele sempre usa o caminho mais curto
+        entre um byte e o próximo — inclusive dando a volta na célula (de 0 para 255).
+      </p>
+
+      <label className="block text-xs font-semibold tracking-wide text-slate-400 uppercase" htmlFor="gen-text">
+        Texto a imprimir
+      </label>
+      <textarea
+        id="gen-text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={3}
+        className="w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-sm text-slate-200 outline-none focus:border-sky-500"
+        placeholder="Digite algo…"
+      />
+
+      <label className="flex items-center gap-2 text-xs text-slate-400">
+        Quebrar linhas a cada
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={4}
+          value={wrap}
+          onChange={(e) => setWrap(Number(e.target.value))}
+          className="w-32 accent-sky-400"
+        />
+        <span className="w-20 font-mono text-slate-300">{wrap === 0 ? "linha única" : `${wrap} caracteres`}</span>
+      </label>
+
+      <div className="rounded-lg border border-slate-800 bg-slate-950 p-3">
+        <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+          <span>
+            {code.length.toLocaleString("pt-BR")} comandos para {bytes.toLocaleString("pt-BR")} byte(s)
+          </span>
+          <button
+            type="button"
+            onClick={copy}
+            disabled={!code}
+            className="rounded border border-slate-700 px-2 py-0.5 text-[11px] text-slate-300 hover:bg-slate-800 disabled:opacity-40"
+          >
+            {copied ? "Copiado ✓" : "Copiar"}
+          </button>
+        </div>
+        <pre className="max-h-64 overflow-auto font-mono text-[12px] leading-5 break-all whitespace-pre-wrap">
+          {code ? highlight(code) : <span className="text-slate-600">(nada para gerar ainda)</span>}
+        </pre>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onLoadCode(code)}
+        disabled={!code}
+        className="w-full rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Usar no editor
+      </button>
+
+      <p className="text-xs text-slate-500">
+        Dica: o código gerado usa apenas uma célula e não tem loops, então dá para acompanhar cada caractere no modo
+        “Passo”.
+      </p>
     </div>
   );
 }

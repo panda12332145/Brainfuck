@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    name: Typecheck, testes e build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar tipos (tsc)
+        run: npm run typecheck
+
+      - name: Rodar testes
+        run: npm test
+
+      - name: Gerar build de produção
+        run: npm run build
+
+      - name: Publicar a versão offline (arquivo único)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bf-studio-offline
+          path: dist/index.html
+          if-no-files-found: error

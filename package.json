@@ -1,18 +1,26 @@
 {
-  "name": "react-vite-tailwind",
+  "name": "bf-studio",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Editor, compilador e depurador visual de Brainfuck que roda inteiro no navegador",
   "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "vite",
+    "start": "vite --host --open",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
-    "clsx": "2.1.1",
     "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "tailwind-merge": "3.4.0"
+    "react-dom": "19.2.6"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.17",
@@ -23,6 +31,7 @@
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",
     "vite": "7.3.2",
-    "vite-plugin-singlefile": "2.3.0"
+    "vite-plugin-singlefile": "2.3.0",
+    "vitest": "3.2.7"
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { category, charLabel, describe, suggest } from "../bf/ascii";
+import { category, charLabel, describe, isPrintable, suggest } from "../bf/ascii";
 
 interface Props {
   index: number;
@@ -20,7 +20,7 @@ export function Inspector({ index, value, isPtr, following, onFollow }: Props) {
   const preview = v !== value;
   const bin = v.toString(2).padStart(8, "0");
   const sug = suggest(v);
-  const glyph = v >= 33 && v < 127 ? String.fromCharCode(v) : charLabel(v);
+  const glyph = isPrintable(v) ? String.fromCharCode(v) : charLabel(v);
 
   const copy = () => {
     navigator.clipboard?.writeText(sug.code).then(() => {
