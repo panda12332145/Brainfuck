@@ -1,6 +1,8 @@
-# Scripts do Windows precisam de CRLF para o cmd.exe funcionar direito
-*.bat  text eol=crlf
-*.cmd  text eol=crlf
+# Scripts do Windows precisam de CRLF de verdade, inclusive no repositório
+# (-text = sem conversão, então o byte gravado é o byte do arquivo. Assim o
+#  iniciar.bat funciona tanto clonando quanto baixando o ZIP do GitHub.)
+*.bat  -text
+*.cmd  -text
 *.ps1  text eol=crlf
 
 # Scripts de shell precisam de LF
