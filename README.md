@@ -76,6 +76,8 @@ com dois cliques, sem servidor e sem internet. Dá para levar num pen drive.
 
 ### Editor
 - Realce de sintaxe dos 8 comandos, com números de linha.
+- O contêiner do editor agora usa até 60% da altura da tela (antes eram 440px fixos) e o cursor
+  entra em cena sozinho quando você digita ou navega para fora da área visível.
 - **Modo ao vivo**: a fita mostra o estado na primeira vez em que a execução chega ao cursor — sem precisar rodar nada.
 - A instrução em execução fica destacada, e o **colchete parceiro** acende junto.
 - Erros de sintaxe e de execução apontam a linha e a coluna exatas.
@@ -212,6 +214,11 @@ e ainda publica o `dist/index.html` como artefato.
 
 **Bugs corrigidos**
 
+- **O editor desalinhava com muitas linhas** (o mais grave): o `<textarea>` invisível ficava
+  limitado à altura visível do contêiner e passava a rolar *por dentro* — até ~43 linhas de desvio —
+  enquanto o `<pre>` colorido ficava parado. Você via uma linha e digitava/apagava em outra. Agora o
+  textarea tem sempre a altura do conteúdo inteiro, nunca rola sozinho, e é o contêiner externo que
+  rola junto com o `<pre>`, seguindo o cursor na vertical e na horizontal.
 - Erros de execução no **modo ao vivo** não apareciam na barra de status (o texto saía vazio) e não
   destacavam a instrução no editor — agora o `pc` do erro é gravado na máquina.
 - **`Passo a linha` travava a interface**: girava até 1.000.000 de instruções sem devolver o controle
