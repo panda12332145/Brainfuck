@@ -265,3 +265,14 @@ e ainda publica o `dist/index.html` como artefato.
 ## 📄 Licença
 
 [MIT](LICENSE) — use, modifique e distribua à vontade.
+
+## 📊 Métricas
+
+<!-- metrics:start -->
+| Métrica | Valor |
+|---|---|
+| ⭐ Stars | 0 |
+| 🍴 Forks | 0 |
+| 📌 Issues abertas | 0 |
+| 🕐 Último commit | 2026-10-02 |
+<!-- metrics:end -->
