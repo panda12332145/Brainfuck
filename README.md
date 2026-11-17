@@ -274,5 +274,5 @@ e ainda publica o `dist/index.html` como artefato.
 | ⭐ Stars | 0 |
 | 🍴 Forks | 0 |
 | 📌 Issues abertas | 0 |
-| 🕐 Último commit | 2026-10-02 |
+| 🕐 Último commit | 2026-10-20 |
 <!-- metrics:end -->
